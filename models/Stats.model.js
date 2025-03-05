@@ -32,4 +32,4 @@ const statsSchema = new mongoose.Schema({
   stealsBall: { type: Number, default: 0 },
 });
 
-module.exports = mongoose.model("Stats", statsSchema);
+export default mongoose.model("Stats", statsSchema);

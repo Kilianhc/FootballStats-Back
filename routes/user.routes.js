@@ -1,73 +1,73 @@
 import express from "express";
 import User from "../models/User.model.js";
 import isAuthenticated from "../middleware/jwt.middleware.js";
+import Team from "../models/Team.model.js";
 
 const router = express.Router();
 
-// ✅ Obtener perfil del usuario autenticado
-router.get("/user", isAuthenticated, async (req, res, next) => {
+/**  GET /api/users/:userId -> Obtener perfil de un usuario */
+router.get("/:userId", isAuthenticated, async (req, res, next) => {
   try {
-    const user = await User.findById(req.payload._id).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const { userId } = req.params;
 
-    res.status(200).json(user);
-  } catch (err) {
-    next(err);
-  }
-});
+    // Buscar usuario en la BD
+    const user = await User.findById(userId).select("-password"); // Excluir password
 
-//  Obtener perfil de un usuario por ID (solo visible para sí mismo)
-router.get("/user/:id", isAuthenticated, async (req, res, next) => {
-  try {
-    if (req.payload._id !== req.params.id) {
-      return res.status(403).json({ message: "You can only view your own profile" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const user = await User.findById(req.params.id).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
-
     res.status(200).json(user);
   } catch (err) {
     next(err);
   }
 });
 
-//  Actualizar datos del usuario autenticado
-router.put("/user", isAuthenticated, async (req, res, next) => {
-  const { name, email } = req.body;
-  
+/**  PUT /api/users/:userId -> Modificar perfil (asignar equipo) */
+// Ruta para modificar el perfil de usuario
+router.put("/:userId", isAuthenticated, async (req, res) => {
   try {
+    const { userId } = req.params;
+    const { name, email, team } = req.body; // Ahora "team" es el nombre del equipo enviado en el cuerpo
+
+    let teamId = null;
+
+    if (team) {
+      const foundTeam = await Team.findOne({ name: team });
+      if (!foundTeam) {
+        return res.status(400).json({ message: "Team not found. Please provide a valid team name." });
+      }
+      teamId = foundTeam._id; // Guardamos el ID del equipo encontrado
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
-      req.payload._id,
-      { name, email },
-      { new: true, runValidators: true }
-    ).select("-password");
+      userId,
+      { name, email, team: teamId }, // Guardamos el ID en el campo `team`
+      { new: true }
+    );
 
     res.status(200).json(updatedUser);
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Error updating profile" });
   }
 });
 
-//  Eliminar cuenta del usuario autenticado
-router.delete("/user", isAuthenticated, async (req, res, next) => {
-  try {
-    await User.findByIdAndDelete(req.payload._id);
-    res.status(204).send(); // No devuelve contenido, solo éxito
-  } catch (err) {
-    next(err);
-  }
-});
 
-//  Obtener todos los usuarios (SOLO ANALYSTS PUEDEN VER A OTROS USUARIOS)
-router.get("/", isAuthenticated, async (req, res, next) => {
+
+/**  DELETE /api/users/:userId -> Eliminar su cuenta */
+router.delete("/:userId", isAuthenticated, async (req, res, next) => {
   try {
-    if (req.payload.role !== "Analyst") {
-      return res.status(403).json({ message: "Access denied" });
+    const { userId } = req.params;
+    const loggedUserId = req.payload._id;
+
+    // Solo el usuario puede eliminarse a sí mismo
+    if (userId !== loggedUserId) {
+      return res.status(403).json({ message: "You can only delete your own account" });
     }
-    
-    const users = await User.find().select("-password");
-    res.status(200).json(users);
+
+    await User.findByIdAndDelete(userId);
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (err) {
     next(err);
   }

@@ -1,21 +1,117 @@
 import express from "express";
-const router = express.Router();
+import isAuthenticated from "../middleware/jwt.middleware.js";
 import Team from "../models/Team.model.js";
-import { isAuthenticated } from "../middleware/jwt.middleware.js"
+import User from "../models/User.model.js";
 
-router.get("/", async (req, res) => {
-  const teams = await Team.find();
-  res.json(teams);
+const router = express.Router();
+
+//  (POST) Crear un equipo (Solo Analysts pueden hacerlo)
+router.post("/", isAuthenticated, async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    const userId = req.payload._id;
+
+    // Verificar que el usuario es Analyst
+    const user = await User.findById(userId);
+    if (!user || user.role !== "Analyst") {
+      return res.status(403).json({ message: "Only Analysts can create teams." });
+    }
+
+    // Verificar si el equipo ya existe
+    const existingTeam = await Team.findOne({ name });
+    if (existingTeam) {
+      return res.status(400).json({ message: "Team name already exists." });
+    }
+
+    // Crear equipo
+    const newTeam = await Team.create({ name, createdBy: userId });
+
+    res.status(201).json(newTeam);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post("/", isAuthenticated, async (req, res) => {
-  const newTeam = await Team.create(req.body);
-  res.json(newTeam);
+//  (GET) Obtener todos los equipos (Solo Analysts ven los suyos)
+router.get("/", isAuthenticated, async (req, res, next) => {
+  try {
+    const userId = req.payload._id;
+    const userRole = req.payload.role;
+
+    let teams;
+    if (userRole === "Analyst") {
+      teams = await Team.find({ createdBy: userId }); //  Solo los equipos creados por el Analyst
+    } else if (userRole === "Coach") {
+      teams = await Team.find({ coaches: userId }); //  Solo los equipos donde el Coach está registrado
+    } else {
+      teams = []; // Si el usuario no es ni Analyst ni Coach, no puede ver equipos
+    }
+
+    res.status(200).json(teams);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.delete("/:id", isAuthenticated, async (req, res) => {
-  await Team.findByIdAndDelete(req.params.id);
-  res.json({ message: "Equipo eliminado" });
+//  (GET) Obtener detalles de un equipo por ID
+router.get("/:teamId", isAuthenticated, async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const team = await Team.findById(teamId);
+
+    if (!team) {
+      return res.status(404).json({ message: "Team not found." });
+    }
+
+    res.status(200).json(team);
+  } catch (err) {
+    next(err);
+  }
 });
 
-module.exports = router;
+//  (PUT) Modificar un equipo (Solo Analysts pueden modificar los suyos)
+router.put("/:teamId", isAuthenticated, async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const { name } = req.body;
+    const userId = req.payload._id;
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found." });
+    }
+
+    if (team.createdBy.toString() !== userId) {
+      return res.status(403).json({ message: "You can only edit teams you created." });
+    }
+
+    const updatedTeam = await Team.findByIdAndUpdate(teamId, { name }, { new: true });
+    res.status(200).json(updatedTeam);
+  } catch (err) {
+    next(err);
+  }
+});
+
+//  (DELETE) Eliminar un equipo (Solo Analysts pueden eliminar los suyos)
+router.delete("/:teamId", isAuthenticated, async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const userId = req.payload._id;
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found." });
+    }
+
+    if (team.createdBy.toString() !== userId) {
+      return res.status(403).json({ message: "You can only delete teams you created." });
+    }
+
+    await Team.findByIdAndDelete(teamId);
+    res.status(200).json({ message: "Team deleted successfully." });
+  } catch (err) {
+    next(err);
+  }
+});
+
+export default router;

@@ -32,10 +32,10 @@ router.post("/signup", async (req, res, next) => {
     return res.status(400).json({ message: "Invalid role. Allowed roles: analista, coach" });
   }
 
-  // Validar el campo 'team' según el rol
+  /* // Validar el campo 'team' según el rol
   if ((role === "Coach" || role === "Analyst") && !teamName) {
     return res.status(400).json({ message: "Team is required for coach role" });
-  }
+  } */
 
   // This regular expression check that the email is of a valid format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
