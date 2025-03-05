@@ -1,5 +1,5 @@
 import express from "express";
-import Player from "../models/player.model.js";
+import Player from "../models/Player.model.js";
 import Team from "../models/Team.model.js";
 import isAuthenticated from "../middleware/jwt.middleware.js";
 import mongoose from "mongoose";
