@@ -21,15 +21,17 @@ const statsSchema = new mongoose.Schema({
   goalShoots: { type: Number, default: 0 },
   outShoots: { type: Number, default: 0 },
   triedDribblings: { type: Number, default: 0 },
-  SuccesDribblings: { type: Number, default: 0 },
+  succesDribblings: { type: Number, default: 0 },
 
   // Stats específicas para defensas y centrocampistas
   triedTackles: { type: Number, default: 0 },
-  SuccesTackles: { type: Number, default: 0 },
+  succesTackles: { type: Number, default: 0 },
   triedPass: { type: Number, default: 0 },
   succesPass: { type: Number, default: 0 },
   turnoversBall: { type: Number, default: 0 },
   stealsBall: { type: Number, default: 0 },
+
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 });
 
 export default mongoose.model("Stats", statsSchema);

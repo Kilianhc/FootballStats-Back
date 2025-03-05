@@ -16,7 +16,7 @@ app.use(express.json());
 import config from "./config/index.js"
 config(app)
 
-// 👇 Start handling routes here
+//  Start handling routes here
 import indexRoutes from "./routes/index.routes.js";
 app.use("/api", indexRoutes);
 
@@ -31,6 +31,9 @@ app.use("/api/teams", teamRoutes);
 
 import playerRoutes from "./routes/player.routes.js";
 app.use("/api/players", playerRoutes)
+
+import statRoutes from "./routes/stats.routes.js";
+app.use("/api/stats", statRoutes)
 
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 import errorhandling from "./error-handling/index.js"
