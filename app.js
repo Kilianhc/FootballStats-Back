@@ -1,6 +1,8 @@
 // ℹ️ Gets access to environment variables/settings
 // https://www.npmjs.com/package/dotenv
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config()
+console.log("TOKEN_SECRET:", process.env.TOKEN_SECRET);
 
 // ℹ️ Connects to the database
 import "./db/index.js";

@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config()
+console.log("TOKEN_SECRET:", process.env.TOKEN_SECRET);
 import app from "./app.js";
 
 // ℹ️ Sets the PORT for our app to have access to it. If no env has been set, we hard code it to 5005

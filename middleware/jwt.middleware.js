@@ -1,27 +1,31 @@
 import { expressjwt } from "express-jwt";
 
-// Instantiate the JWT token validation middleware
-const isAuthenticated = expressjwt({
-  secret: process.env.TOKEN_SECRET,
-  algorithms: ["HS256"],
-  requestProperty: "payload",
-  getToken: getTokenFromHeaders,
-});
+const isAuthenticated = (req, res, next) => {
+  const token = getTokenFromHeaders(req);
 
-// Function used to extract the JWT token from the request's 'Authorization' Headers
-function getTokenFromHeaders(req) {
-  // Check if the token is available on the request Headers
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.split(" ")[0] === "Bearer"
-  ) {
-    // Get the encoded token string and return it
-    const token = req.headers.authorization.split(" ")[1];
-    return token;
+  if (!token) {
+    return res.status(401).json({ message: "No authorization token was found" });
   }
 
+  expressjwt({
+    secret: process.env.TOKEN_SECRET,
+    algorithms: ["HS256"],
+    requestProperty: "payload",
+  })(req, res, (err) => {
+    if (err) {
+      console.error("Error en JWT Middleware:", err);
+      return res.status(401).json({ message: "Invalid token", error: err.message });
+    }
+    next();
+  });
+};
+
+// Función para extraer el token
+function getTokenFromHeaders(req) {
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+    return req.headers.authorization.split(" ")[1];
+  }
   return null;
 }
 
-// Export the middleware so that we can use it to create protected routes
-export default isAuthenticated
+export default isAuthenticated;
