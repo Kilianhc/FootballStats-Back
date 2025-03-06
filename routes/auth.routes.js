@@ -20,7 +20,7 @@ const saltRounds = 10;
 
 // POST /auth/signup  - Creates a new user in the database
 router.post("/signup", async (req, res, next) => {
-  const { email, password, name, teamName, role } = req.body;
+  const { email, password, name, role } = req.body;
 
   // Check if email or password or name are provided as empty strings
   if (!email || !password || !name || !role) {
@@ -62,16 +62,6 @@ router.post("/signup", async (req, res, next) => {
       return res.status(400).json({ message: "User already exists." });
     }
 
-    // Si el rol es 'Coach', buscar el equipo por nombre
-    let teamId = null;
-    if (teamName) {
-      const foundTeam = await Team.findOne({ name: teamName });
-      if (!foundTeam) {
-        return res.status(400).json({ message: "Team not found. Please provide a valid team name." });
-      }
-      teamId = foundTeam._id; // Asignar el ID del equipo encontrado
-    }
-
     // Hash de la contraseña
     const salt = bcrypt.genSaltSync(saltRounds);
     const hashedPassword = bcrypt.hashSync(password, salt);
@@ -81,27 +71,13 @@ router.post("/signup", async (req, res, next) => {
       email,
       password: hashedPassword,
       name,
-      team: teamId, // Asignar el ID del equipo (o null si es Analista)
+      team: null, // Asignar el ID del equipo (o null si es Analista)
       role
     });
 
-    if (role === "Coach") {
-      await Team.findByIdAndUpdate(
-        teamId,
-        { $push: { coaches: createdUser._id } }, // Agregar el ID del Coach al equipo
-        { new: true }
-      );
-    } else if (role === "Analyst") {
-      await Team.findByIdAndUpdate(
-        teamId,
-        { $push: { analysts: createdUser._id } }, // Agregar el ID del Coach al equipo
-        { new: true }
-      );
-    } 
-
     // Devolver el usuario creado (sin la contraseña)
-    const { email: userEmail, name: userName, _id, role: userRole, team } = createdUser;
-    const user = { email: userEmail, name: userName, _id, role: userRole, team };
+    const { email: userEmail, name: userName, _id, role: userRole} = createdUser;
+    const user = { email: userEmail, name: userName, _id, role: userRole};
     res.status(201).json({ user });
   } catch (err) {
     next(err);

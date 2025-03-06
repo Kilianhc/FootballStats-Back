@@ -103,4 +103,70 @@ router.delete("/:teamId", isAuthenticated, async (req, res, next) => {
   }
 });
 
+// (POST) Solicitar unirse a un equipo (Solo Coaches pueden hacerlo)
+router.post("/:teamId/request", isAuthenticated, async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const userId = req.payload._id;
+
+    const user = await User.findById(userId);
+    if (!user || user.role !== "Coach") {
+      return res.status(403).json({ message: "Only Coaches can request to join a team." });
+    }
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found." });
+    }
+
+    if (team.joinRequests.includes(userId)) {
+      return res.status(400).json({ message: "You have already requested to join this team." });
+    }
+
+    team.joinRequests.push(userId);
+    await team.save();
+
+    res.status(200).json({ message: "Request to join team sent." });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// (POST) Aceptar o rechazar solicitud de unión a un equipo (Solo Analysts pueden hacerlo)
+router.post("/:teamId/respond-request", isAuthenticated, async (req, res, next) => {
+  try {
+    const { teamId } = req.params;
+    const { userId, accept } = req.body; // `accept` es un booleano
+    const analystId = req.payload._id;
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found." });
+    }
+
+    if (team.createdBy.toString() !== analystId) {
+      return res.status(403).json({ message: "Only the team creator can accept/reject requests." });
+    }
+
+    if (!team.joinRequests.includes(userId)) {
+      return res.status(400).json({ message: "No such request found." });
+    }
+
+    // Si se acepta, se asigna el equipo al usuario y se lo agrega al equipo
+    if (accept) {
+      await User.findByIdAndUpdate(userId, { team: teamId });
+      team.coaches.push(userId);
+    }
+
+    // Se elimina la solicitud
+    team.joinRequests = team.joinRequests.filter((id) => id.toString() !== userId);
+    await team.save();
+
+    res.status(200).json({ message: accept ? "User added to the team." : "Request rejected." });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 export default router;
