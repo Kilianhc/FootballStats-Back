@@ -5,6 +5,22 @@ import Team from "../models/Team.model.js";
 
 const router = express.Router();
 
+router.get("/profile", isAuthenticated, async (req, res, next) => {
+  try {
+    const userId = req.payload._id; // Extraer el ID del usuario autenticado
+
+    const user = await User.findById(userId).select("-password"); // Excluir contraseña
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
 /**  GET /api/users/:userId -> Obtener perfil de un usuario */
 router.get("/:userId", isAuthenticated, async (req, res, next) => {
   try {

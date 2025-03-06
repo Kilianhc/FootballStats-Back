@@ -32,6 +32,21 @@ router.post("/", isAuthenticated, async (req, res, next) => {
   }
 });
 
+
+router.get("/search", isAuthenticated, async (req, res, next) => {
+  try {
+    const { name } = req.query; // Supongamos que la búsqueda se hace por nombre
+
+    if (!name) {
+      return res.status(400).json({ message: "Please provide a team name to search." });
+    }
+
+    const teams = await Team.find({ name: new RegExp(name, "i") }); // Búsqueda insensible a mayúsculas
+    res.status(200).json(teams);
+  } catch (err) {
+    next(err);
+  }
+});
 //  (GET) Obtener todos los equipos (Solo Analysts ven los suyos)
 router.get("/", async (req, res, next) => {
   try {
