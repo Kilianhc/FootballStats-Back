@@ -33,20 +33,9 @@ router.post("/", isAuthenticated, async (req, res, next) => {
 });
 
 //  (GET) Obtener todos los equipos (Solo Analysts ven los suyos)
-router.get("/", isAuthenticated, async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
-    const userId = req.payload._id;
-    const userRole = req.payload.role;
-
-    let teams;
-    if (userRole === "Analyst") {
-      teams = await Team.find({ createdBy: userId }); //  Solo los equipos creados por el Analyst
-    } else if (userRole === "Coach") {
-      teams = await Team.find({ coaches: userId }); //  Solo los equipos donde el Coach está registrado
-    } else {
-      teams = []; // Si el usuario no es ni Analyst ni Coach, no puede ver equipos
-    }
-
+    const teams = await Team.find({}, "name"); // Solo devuelve el campo "name"
     res.status(200).json(teams);
   } catch (err) {
     next(err);
