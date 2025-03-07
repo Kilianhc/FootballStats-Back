@@ -2,6 +2,7 @@ import express from "express";
 import isAuthenticated from "../middleware/jwt.middleware.js";
 import Team from "../models/Team.model.js";
 import User from "../models/User.model.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
