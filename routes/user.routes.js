@@ -44,7 +44,7 @@ router.get("/:userId", isAuthenticated, async (req, res, next) => {
 router.put("/:userId", isAuthenticated, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { name, email, team } = req.body; // Ahora "team" es el nombre del equipo enviado en el cuerpo
+    const { name, email, team, role } = req.body; // Ahora "team" es el nombre del equipo enviado en el cuerpo
 
     let teamId = null;
 
@@ -58,9 +58,9 @@ router.put("/:userId", isAuthenticated, async (req, res) => {
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { name, email, team: teamId }, // Guardamos el ID en el campo `team`
+      { name, email, team: teamId, role }, // Guardamos el ID en el campo `team`
       { new: true }
-    );
+    ).select("-password");
 
     res.status(200).json(updatedUser);
   } catch (error) {
