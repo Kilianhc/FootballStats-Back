@@ -26,6 +26,9 @@ router.post("/", isAuthenticated, async (req, res, next) => {
     // Crear equipo
     const newTeam = await Team.create({ name, createdBy: userId });
 
+    // Asignar el equipo al usuario que lo creó
+    await User.findByIdAndUpdate(userId, { team: newTeam._id });
+
     res.status(201).json(newTeam);
   } catch (err) {
     next(err);
