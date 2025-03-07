@@ -37,11 +37,16 @@ router.get("/search", isAuthenticated, async (req, res, next) => {
   try {
     const { name } = req.query;
 
-    if (!name) {
-      return res.status(400).json({ message: "Please provide a team name to search." });
+    let teams;
+    if (!name || name.trim() === "") {
+      // Si no se proporciona un nombre, devolver todos los equipos (o un límite)
+      teams = await Team.find().limit(10); // Limita a 10 equipos para evitar sobrecargar la respuesta
+    } else {
+      // Si se proporciona un nombre, buscar equipos que coincidan
+      teams = await Team.find({ name: new RegExp(name, "i") });
     }
 
-    const teams = await Team.find({ name: new RegExp(name, "i") });
+    console.log("Equipos encontrados:", teams); // 👀 Verifica los datos en el backend
     res.status(200).json(teams);
   } catch (err) {
     next(err);
