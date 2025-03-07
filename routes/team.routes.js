@@ -5,7 +5,7 @@ import User from "../models/User.model.js";
 
 const router = express.Router();
 
-//  (POST) Crear un equipo (Solo Analysts pueden hacerlo)
+// (POST) Crear un equipo (Solo Analysts pueden hacerlo)
 router.post("/", isAuthenticated, async (req, res, next) => {
   try {
     const { name } = req.body;
@@ -32,11 +32,9 @@ router.post("/", isAuthenticated, async (req, res, next) => {
   }
 });
 
-
+// (GET) Buscar equipos por nombre
 router.get("/search", isAuthenticated, async (req, res, next) => {
   try {
-    console.log("Token recibido en el backend:", req.headers.authorization); // 👀 Verifica si el token llega
-
     const { name } = req.query;
 
     if (!name) {
@@ -50,17 +48,7 @@ router.get("/search", isAuthenticated, async (req, res, next) => {
   }
 });
 
-//  (GET) Obtener todos los equipos (Solo Analysts ven los suyos)
-router.get("/", async (req, res, next) => {
-  try {
-    const teams = await Team.find({}, "name"); // Solo devuelve el campo "name"
-    res.status(200).json(teams);
-  } catch (err) {
-    next(err);
-  }
-});
-
-//  (GET) Obtener detalles de un equipo por ID
+// (GET) Obtener detalles de un equipo por ID
 router.get("/:teamId", isAuthenticated, async (req, res, next) => {
   try {
     const { teamId } = req.params;
@@ -76,7 +64,7 @@ router.get("/:teamId", isAuthenticated, async (req, res, next) => {
   }
 });
 
-//  (PUT) Modificar un equipo (Solo Analysts pueden modificar los suyos)
+// (PUT) Editar un equipo (Solo Analysts pueden hacerlo)
 router.put("/:teamId", isAuthenticated, async (req, res, next) => {
   try {
     const { teamId } = req.params;
@@ -88,10 +76,12 @@ router.put("/:teamId", isAuthenticated, async (req, res, next) => {
       return res.status(404).json({ message: "Team not found." });
     }
 
+    // Verificar que el usuario es el creador del equipo
     if (team.createdBy.toString() !== userId) {
       return res.status(403).json({ message: "You can only edit teams you created." });
     }
 
+    // Actualizar el equipo
     const updatedTeam = await Team.findByIdAndUpdate(teamId, { name }, { new: true });
     res.status(200).json(updatedTeam);
   } catch (err) {
@@ -99,7 +89,7 @@ router.put("/:teamId", isAuthenticated, async (req, res, next) => {
   }
 });
 
-//  (DELETE) Eliminar un equipo (Solo Analysts pueden eliminar los suyos)
+// (DELETE) Eliminar un equipo (Solo Analysts pueden hacerlo)
 router.delete("/:teamId", isAuthenticated, async (req, res, next) => {
   try {
     const { teamId } = req.params;
@@ -110,10 +100,12 @@ router.delete("/:teamId", isAuthenticated, async (req, res, next) => {
       return res.status(404).json({ message: "Team not found." });
     }
 
+    // Verificar que el usuario es el creador del equipo
     if (team.createdBy.toString() !== userId) {
       return res.status(403).json({ message: "You can only delete teams you created." });
     }
 
+    // Eliminar el equipo
     await Team.findByIdAndDelete(teamId);
     res.status(200).json({ message: "Team deleted successfully." });
   } catch (err) {
@@ -121,63 +113,55 @@ router.delete("/:teamId", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// (POST) Solicitar unirse a un equipo (Solo Coaches pueden hacerlo)
-router.post("/:teamId/request", isAuthenticated, async (req, res, next) => {
+// (GET) Obtener solicitudes de unión a un equipo (Solo Analysts pueden hacerlo)
+router.get("/:teamId/requests", isAuthenticated, async (req, res, next) => {
   try {
     const { teamId } = req.params;
     const userId = req.payload._id;
-
-    const user = await User.findById(userId);
-    if (!user || user.role !== "Coach") {
-      return res.status(403).json({ message: "Only Coaches can request to join a team." });
-    }
 
     const team = await Team.findById(teamId);
     if (!team) {
       return res.status(404).json({ message: "Team not found." });
     }
 
-    if (team.joinRequests.includes(userId)) {
-      return res.status(400).json({ message: "You have already requested to join this team." });
+    // Verificar que el usuario es el creador del equipo
+    if (team.createdBy.toString() !== userId) {
+      return res.status(403).json({ message: "Only the team creator can view requests." });
     }
 
-    team.joinRequests.push(userId);
-    await team.save();
-
-    res.status(200).json({ message: "Request to join team sent." });
+    // Obtener detalles de los usuarios que han solicitado unirse
+    const requests = await User.find({ _id: { $in: team.joinRequests } }).select("name email");
+    res.status(200).json(requests);
   } catch (err) {
     next(err);
   }
 });
 
-// (POST) Aceptar o rechazar solicitud de unión a un equipo (Solo Analysts pueden hacerlo)
-router.post("/:teamId/respond-request", isAuthenticated, async (req, res, next) => {
+// (POST) Responder a una solicitud de unión (Solo Analysts pueden hacerlo)
+router.post("/:requestId/respond-request", isAuthenticated, async (req, res, next) => {
   try {
-    const { teamId } = req.params;
-    const { userId, accept } = req.body; // `accept` es un booleano
+    const { requestId } = req.params;
+    const { accept } = req.body; // `accept` es un booleano
     const analystId = req.payload._id;
 
-    const team = await Team.findById(teamId);
+    const team = await Team.findOne({ joinRequests: requestId });
     if (!team) {
-      return res.status(404).json({ message: "Team not found." });
+      return res.status(404).json({ message: "Request not found." });
     }
 
+    // Verificar que el usuario es el creador del equipo
     if (team.createdBy.toString() !== analystId) {
       return res.status(403).json({ message: "Only the team creator can accept/reject requests." });
     }
 
-    if (!team.joinRequests.includes(userId)) {
-      return res.status(400).json({ message: "No such request found." });
-    }
-
     // Si se acepta, se asigna el equipo al usuario y se lo agrega al equipo
     if (accept) {
-      await User.findByIdAndUpdate(userId, { team: teamId });
-      team.coaches.push(userId);
+      await User.findByIdAndUpdate(requestId, { team: team._id });
+      team.coaches.push(requestId);
     }
 
     // Se elimina la solicitud
-    team.joinRequests = team.joinRequests.filter((id) => id.toString() !== userId);
+    team.joinRequests = team.joinRequests.filter((id) => id.toString() !== requestId);
     await team.save();
 
     res.status(200).json({ message: accept ? "User added to the team." : "Request rejected." });
@@ -185,6 +169,5 @@ router.post("/:teamId/respond-request", isAuthenticated, async (req, res, next) 
     next(err);
   }
 });
-
 
 export default router;
