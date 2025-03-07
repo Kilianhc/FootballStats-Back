@@ -60,8 +60,13 @@ router.get("/search", isAuthenticated, async (req, res, next) => {
 router.get("/:teamId", isAuthenticated, async (req, res, next) => {
   try {
     const { teamId } = req.params;
-    const team = await Team.findById(teamId);
 
+    // Verifica si teamId es un ObjectId válido
+    if (!mongoose.Types.ObjectId.isValid(teamId)) {
+      return res.status(400).json({ message: "Invalid team ID" });
+    }
+
+    const team = await Team.findById(teamId);
     if (!team) {
       return res.status(404).json({ message: "Team not found." });
     }
