@@ -44,7 +44,7 @@ router.get("/search", isAuthenticated, async (req, res, next) => {
     let teams;
     if (!name || name.trim() === "") {
       // Si no se proporciona un nombre, devolver todos los equipos (o un límite)
-      teams = await Team.find().limit(10); // Limita a 10 equipos para evitar sobrecargar la respuesta
+      teams = await Team.find();
     } else {
       // Si se proporciona un nombre, buscar equipos que coincidan
       teams = await Team.find({ name: new RegExp(name, "i") });
