@@ -24,7 +24,9 @@ export default (app) => {
   // controls a very specific header to pass headers from the frontend
   app.use(
     cors({
-      origin: [FRONTEND_URL],
+      origin: 'https://analyststats.netlify.app',
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      credentials: true
     })
   );
 
