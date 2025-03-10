@@ -67,7 +67,7 @@ router.get("/:teamId", isAuthenticated, async (req, res, next) => {
       return res.status(400).json({ message: "Invalid team ID" });
     }
 
-    const team = await Team.findById(teamId);
+    const team = await Team.findById(teamId).populate("players");
     if (!team) {
       return res.status(404).json({ message: "Team not found." });
     }
@@ -96,7 +96,7 @@ router.put("/:teamId", isAuthenticated, async (req, res, next) => {
     }
 
     // Actualizar el equipo
-    const updatedTeam = await Team.findByIdAndUpdate(teamId, { name }, { new: true });
+    const updatedTeam = await Team.findByIdAndUpdate(teamId, { name }, { new: true }).populate("players");
     res.status(200).json(updatedTeam);
   } catch (err) {
     next(err);
