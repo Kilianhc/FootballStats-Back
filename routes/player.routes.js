@@ -16,7 +16,7 @@ router.post("/", isAuthenticated, async (req, res) => {
     const userId = req.payload._id; // Extraemos el ID del usuario autenticado
 
     // Buscar el equipo por su nombre
-    const foundTeam = await Team.findOne({ name: team });
+    const foundTeam = await Team.findById(team);
 
     if (!foundTeam) {
       return res.status(404).json({ message: "El equipo no existe." });
