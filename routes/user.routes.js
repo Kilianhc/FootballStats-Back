@@ -39,21 +39,26 @@ router.get("/:userId", isAuthenticated, async (req, res, next) => {
   }
 });
 
-/**  PUT /api/users/:userId -> Modificar perfil (asignar equipo) */
 // Ruta para modificar el perfil de usuario
 router.put("/:userId", isAuthenticated, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { name, email, team, role } = req.body; // Ahora "team" es el nombre del equipo enviado en el cuerpo
+    const { name, email, team, role } = req.body;
 
     let teamId = null;
 
     if (team) {
-      const foundTeam = await Team.findOne({ name: team });
-      if (!foundTeam) {
-        return res.status(400).json({ message: "Team not found. Please provide a valid team name." });
+      // Verificar si el "team" es un ObjectId (no un nombre)
+      if (mongoose.Types.ObjectId.isValid(team)) {
+        teamId = team; // Si es un ObjectId, lo usamos directamente
+      } else {
+        // Si no es un ObjectId, buscamos el equipo por nombre
+        const foundTeam = await Team.findOne({ name: team });
+        if (!foundTeam) {
+          return res.status(400).json({ message: "Team not found. Please provide a valid team name." });
+        }
+        teamId = foundTeam._id; // Guardamos el ID del equipo encontrado
       }
-      teamId = foundTeam._id; // Guardamos el ID del equipo encontrado
     }
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -68,6 +73,7 @@ router.put("/:userId", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: "Error updating profile" });
   }
 });
+
 
 
 
