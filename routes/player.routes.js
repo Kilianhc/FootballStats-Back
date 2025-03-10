@@ -30,6 +30,12 @@ router.post("/", isAuthenticated, async (req, res) => {
       team: foundTeam._id,
       createdBy: userId,
     });
+    //**Actualizar el equipo agregando el jugador a su lista de players**
+    await Team.findByIdAndUpdate(
+      foundTeam._id,
+      { $push: { players: newPlayer._id } }, // Agregar el jugador al array
+      { new: true }
+    );
 
     res.status(201).json(newPlayer);
   } catch (error) {
