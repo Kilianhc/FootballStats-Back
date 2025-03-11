@@ -190,46 +190,60 @@ router.put("/player/:playerId", isAuthenticated, async (req, res) => {
       return res.status(404).json({ message: "Estadísticas no encontradas para este jugador." });
     }
 
+    // Sanitizar las estadísticas, asegurándonos de que no sean undefined o null
+    const sanitizedStats = {
+      matchs: newStats.matchs || 0,
+      minutes: newStats.minutes || 0,
+      goals: newStats.goals || 0,
+      asists: newStats.asists || 0,
+      saves: newStats.saves || 0,
+      goalsConceded: newStats.goalsConceded || 0,
+      cleanSheet: newStats.cleanSheet || 0,
+      shootsOnGoalReceived: newStats.shootsOnGoalReceived || 0,
+      goalShoots: newStats.goalShoots || 0,
+      outShoots: newStats.outShoots || 0,
+      triedDribblings: newStats.triedDribblings || 0,
+      succesDribblings: newStats.succesDribblings || 0,
+      triedTackles: newStats.triedTackles || 0,
+      succesTackles: newStats.succesTackles || 0,
+      triedPass: newStats.triedPass || 0,
+      succesPass: newStats.succesPass || 0,
+      turnoversBall: newStats.turnoversBall || 0,
+      stealsBall: newStats.stealsBall || 0
+    };
+
     // Sumar las nuevas estadísticas a las existentes
     const updatedStats = await Stat.findOneAndUpdate(
       { player: playerId },
-      {
-        $inc: { // Operador MongoDB para incrementar valores numéricos
-          matchs: newStats.matchs || 0,
-          minutes: newStats.minutes || 0,
-          goals: newStats.goals || 0,
-          asists: newStats.asists || 0,
-          saves: newStats.saves || 0,
-          goalsConceded: newStats.goalsConceded || 0,
-          cleanSheet: newStats.cleanSheet || 0,
-          shootsOnGoalReceived: newStats.shootsOnGoalReceived || 0,
-          goalShoots: newStats.goalShoots || 0,
-          outShoots: newStats.outShoots || 0,
-          triedDribblings: newStats.triedDribblings || 0,
-          succesDribblings: newStats.succesDribblings || 0,
-          triedTackles: newStats.triedTackles || 0,
-          succesTackles: newStats.succesTackles || 0,
-          triedPass: newStats.triedPass || 0,
-          succesPass: newStats.succesPass || 0,
-          turnoversBall: newStats.turnoversBall || 0,
-          stealsBall: newStats.stealsBall || 0,
-        }
-      },
-      { new: true }
+      { $inc: sanitizedStats },
+      { new: true } // Devuelve el documento actualizado
     );
 
-    // Sobreescribir estadísticas en `Player`*******
-    await Player.findOneAndUpdate(
+    // Si no se actualizó ninguna estadística, devuelvo un error
+    if (!updatedStats) {
+      return res.status(500).json({ message: "Error al actualizar las estadísticas." });
+    }
+
+    // Sobreescribir las estadísticas en el jugador
+    const updatedPlayer = await Player.findOneAndUpdate(
       { _id: playerId },
-      { stats: updatedStats._id }
+      { stats: updatedStats._id },
+      { new: true } // Devuelve el documento actualizado del jugador
     );
 
+    // Si no se encontró al jugador o no se actualizó, devuelve un error
+    if (!updatedPlayer) {
+      return res.status(404).json({ message: "Jugador no encontrado." });
+    }
+
+    // Responde con las estadísticas actualizadas
     res.status(200).json(updatedStats);
   } catch (err) {
     console.error("Error updating player stats:", err);
     res.status(500).json({ message: "Error al actualizar las estadísticas del jugador.", error: err });
   }
 });
+
 
 
 /**
