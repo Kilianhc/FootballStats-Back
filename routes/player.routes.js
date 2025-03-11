@@ -66,7 +66,7 @@ router.get("/", isAuthenticated, async (req, res) => {
 
     if (userRole === "Analyst") {
       // Si es Analyst, solo ve los jugadores que ha creado y de su equipo
-      players = await Player.find({ createdBy: userId, team: userTeam }).populate("team");
+      players = await Player.find({ createdBy: userId, team: userTeam }).populate("team").populate("stats");
     } else if (userRole === "Coach") {
       // Si es Coach, solo ve los jugadores de su equipo
       players = await Player.find({ team: userTeam }).populate("team");
@@ -96,7 +96,7 @@ router.get("/:playerId", isAuthenticated, async (req, res) => {
 
     if (userRole === "Analyst") {
       // Si es Analyst, solo ve los jugadores que ha creado y de su equipo
-      player = await Player.findOne({ _id: playerId, createdBy: userId, team: userTeam }).populate("team");
+      player = await Player.findOne({ _id: playerId, createdBy: userId, team: userTeam }).populate("team").populate("stats");
     } else if (userRole === "Coach") {
       // Si es Coach, solo ve los jugadores de su equipo
       player = await Player.findOne({ _id: playerId, team: userTeam }).populate("team");
