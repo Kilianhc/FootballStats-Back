@@ -1,6 +1,7 @@
 import express from "express";
 import Player from "../models/Player.model.js";
 import Team from "../models/Team.model.js";
+import Stat from "../models/Stats.model.js"
 import isAuthenticated from "../middleware/jwt.middleware.js";
 import mongoose from "mongoose";
 
@@ -22,14 +23,22 @@ router.post("/", isAuthenticated, async (req, res) => {
       return res.status(404).json({ message: "El equipo no existe." });
     }
 
+    // Crear las estadísticas iniciales del jugador
+    const newStats = await Stat.create({ player: null, createdBy: userId });
+
     // Crear el jugador con el ID del equipo y del usuario que lo creó
     const newPlayer = await Player.create({
       name,
       age,
       position,
       team: foundTeam._id,
+      stats: newStats._id, // Vinculamos las estadísticas al jugador
       createdBy: userId,
     });
+
+    // Asignar el jugador a las estadísticas
+    await Stat.findByIdAndUpdate(newStats._id, { player: newPlayer._id });
+
     //**Actualizar el equipo agregando el jugador a su lista de players**
     await Team.findByIdAndUpdate(
       foundTeam._id,

@@ -174,18 +174,55 @@ router.get("/player/:playerId", isAuthenticated, async (req, res) => {
  *  PUT /api/stats/player/:playerId 
  * Editar estadísticas de un jugador específico
  */
+/**
+ *  PUT /api/stats/player/:playerId 
+ *  Actualizar estadísticas de un jugador específico sumando valores en lugar de sobrescribir
+ */
 router.put("/player/:playerId", isAuthenticated, async (req, res) => {
   try {
     const { playerId } = req.params;
+    const newStats = req.body;
+
+    // Buscar las estadísticas actuales del jugador
+    let currentStats = await Stat.findOne({ player: playerId });
+
+    if (!currentStats) {
+      return res.status(404).json({ message: "Estadísticas no encontradas para este jugador." });
+    }
+
+    // Sumar las nuevas estadísticas a las existentes
     const updatedStats = await Stat.findOneAndUpdate(
       { player: playerId },
-      req.body,
+      {
+        $inc: { // Operador MongoDB para incrementar valores numéricos
+          matchs: newStats.matchs || 0,
+          minutes: newStats.minutes || 0,
+          goals: newStats.goals || 0,
+          asists: newStats.asists || 0,
+          saves: newStats.saves || 0,
+          goalsConceded: newStats.goalsConceded || 0,
+          cleanSheet: newStats.cleanSheet || 0,
+          shootsOnGoalReceived: newStats.shootsOnGoalReceived || 0,
+          goalShoots: newStats.goalShoots || 0,
+          outShoots: newStats.outShoots || 0,
+          triedDribblings: newStats.triedDribblings || 0,
+          succesDribblings: newStats.succesDribblings || 0,
+          triedTackles: newStats.triedTackles || 0,
+          succesTackles: newStats.succesTackles || 0,
+          triedPass: newStats.triedPass || 0,
+          succesPass: newStats.succesPass || 0,
+          turnoversBall: newStats.turnoversBall || 0,
+          stealsBall: newStats.stealsBall || 0,
+        }
+      },
       { new: true }
     );
 
-    if (!updatedStats) {
-      return res.status(404).json({ message: "Estadísticas no encontradas para este jugador." });
-    }
+    // Sobreescribir estadísticas en `Player`*******
+    await Player.findOneAndUpdate(
+      { _id: playerId },
+      { stats: updatedStats._id }
+    );
 
     res.status(200).json(updatedStats);
   } catch (err) {
@@ -193,6 +230,7 @@ router.put("/player/:playerId", isAuthenticated, async (req, res) => {
     res.status(500).json({ message: "Error al actualizar las estadísticas del jugador.", error: err });
   }
 });
+
 
 /**
  *  DELETE /api/stats/player/:playerId 
