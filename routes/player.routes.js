@@ -191,4 +191,30 @@ router.delete("/:playerId", isAuthenticated, async (req, res) => {
   }
 });
 
+// Ruta para obtener jugadores por equipo
+router.get("/team/:teamId", isAuthenticated, async (req, res) => {
+  try {
+    const { teamId } = req.params; // Obtenemos el teamId de los parámetros de la URL
+    const userRole = req.payload.role; // Rol del usuario autenticado
+    const userTeam = req.payload.team; // ID del equipo del usuario
+
+    let players;
+
+    if (userRole === "Analyst") {
+      // Si es Analyst, solo ve los jugadores que ha creado y de su equipo
+      players = await Player.find({ createdBy: req.payload._id, team: teamId }).populate("team");
+    } else if (userRole === "Coach") {
+      // Si es Coach, solo ve los jugadores de su equipo
+      players = await Player.find({ team: teamId }).populate("team");
+    } else {
+      return res.status(403).json({ message: "No tienes permiso para ver jugadores." });
+    }
+
+    res.status(200).json(players);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener los jugadores.", error });
+  }
+});
+
+
 export default router;
