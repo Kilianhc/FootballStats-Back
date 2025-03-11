@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const statsSchema = new mongoose.Schema({
 
   //Stats generales
-  player: { type: mongoose.Schema.Types.ObjectId, ref: "Player", required: true },
+  player: { type: mongoose.Schema.Types.ObjectId, ref: "Player", default: null },
   matchs: {type: Number, default: 0},
   minutes: {type: Number, default: 0},
 
