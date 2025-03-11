@@ -5,7 +5,7 @@ const playerSchema = new mongoose.Schema({
   age: {type: Number, required: true},
   position: { type: String, enum: ["Delantero", "Centrocampista", "Defensa", "Portero"], required: true },
   team: { type: mongoose.Schema.Types.ObjectId, ref: "Team", required: true },
-  stats: { type: mongoose.Schema.Types.ObjectId, ref: "Stats" },
+  stats: { type: mongoose.Schema.Types.ObjectId, ref: "Stats", default: null },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 });
 
