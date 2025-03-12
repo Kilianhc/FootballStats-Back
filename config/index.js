@@ -13,7 +13,7 @@ import cookieParser from "cookie-parser";
 // unless the request is made from the same domain, by default express wont accept POST requests
 import cors from "cors";
 
-const FRONTEND_URL = process.env.ORIGIN || "http://localhost:3000" || "https://analyststats.netlify.app";
+const FRONTEND_URL = process.env.ORIGIN || "https://analyststats.netlify.app" || "http://localhost:3000" ;
 
 // Middleware configuration
 export default (app) => {
@@ -22,13 +22,13 @@ export default (app) => {
   app.set("trust proxy", 1);
 
   // controls a very specific header to pass headers from the frontend
-  app.use(
-    cors({
-      origin:  [FRONTEND_URL], 
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      credentials: true
-    })
-  );
+  app.use(cors({
+    origin: [FRONTEND_URL],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+    credentials: true,
+    preflightContinue: false,  
+  }));
+  
 
   // In development environment the app logs
   app.use(logger("dev"));
