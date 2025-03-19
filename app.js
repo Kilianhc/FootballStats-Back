@@ -37,6 +37,9 @@ app.use("/api/players", playerRoutes)
 import statRoutes from "./routes/stats.routes.js";
 app.use("/api/stats", statRoutes)
 
+import aiRoutes from "./routes/ai.routes.js"
+app.use("/api/ai", aiRoutes)
+
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 import errorhandling from "./error-handling/index.js"
 errorhandling(app)
