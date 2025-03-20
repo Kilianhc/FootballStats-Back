@@ -55,10 +55,19 @@ router.post('/recommendations', isAuthenticated, async (req, res, next) => {
 
         // Construir el prompt contextualizado
         const contextualizedPrompt = `
-            ${prompt}
-            Aquí tienes las estadísticas de los jugadores del equipo "${team.name}":
-            ${JSON.stringify(playersData)}
-        `;
+  Eres un asistente de análisis deportivo. Tu tarea es responder preguntas sobre el equipo "${team.name}", sus jugadores y sus estadísticas.
+
+  Pregunta del usuario: "${prompt}"
+
+  Aquí tienes las estadísticas completas de los jugadores del equipo en formato JSON:
+  ${JSON.stringify(playersData, null, 2)}
+
+  Instrucciones:
+  1. Analiza las estadísticas y responde la pregunta de manera precisa.
+  2. Si la pregunta requiere comparaciones, utiliza los datos para justificar tu respuesta.
+  3. Si la pregunta es sobre tácticas o recomendaciones, sugiere acciones basadas en los datos.
+  4. Sé claro y conciso. Limita la respuesta a un máximo de 200 palabras.
+`;
 
         console.log("Enviando solicitud a Gemini con prompt:", contextualizedPrompt);
 
