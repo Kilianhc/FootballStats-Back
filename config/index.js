@@ -13,7 +13,7 @@ import cookieParser from "cookie-parser";
 // unless the request is made from the same domain, by default express wont accept POST requests
 import cors from "cors";
 
-const FRONTEND_URLS = [
+const FRONTEND_URL = [
   "https://analyststats.netlify.app",
   "http://localhost:3000"
 ];
