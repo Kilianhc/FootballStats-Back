@@ -67,6 +67,8 @@ router.post('/recommendations', isAuthenticated, async (req, res, next) => {
   2. Si la pregunta requiere comparaciones, utiliza los datos para justificar tu respuesta.
   3. Si la pregunta es sobre tácticas o recomendaciones, sugiere acciones basadas en los datos.
   4. Sé claro y conciso. Limita la respuesta a un máximo de 200 palabras.
+  5. Formatea la respuesta con saltos de línea (\\n) para separar párrafos y listas.
+  6. Usa guiones (-) para listas en lugar de asteriscos (*).
 `;
 
         console.log("Enviando solicitud a Gemini con prompt:", contextualizedPrompt);
