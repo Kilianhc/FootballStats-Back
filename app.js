@@ -2,7 +2,6 @@
 // https://www.npmjs.com/package/dotenv
 import dotenv from "dotenv";
 dotenv.config()
-console.log("TOKEN_SECRET:", process.env.TOKEN_SECRET);
 
 // ℹ️ Connects to the database
 import "./db/index.js";
