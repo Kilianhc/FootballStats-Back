@@ -6,55 +6,17 @@ import User from "../models/User.model.js"; // Modelo de usuario
 import Team from "../models/Team.model.js"; // Modelo de equipo
 import Player from "../models/Player.model.js"; // Modelo de jugador
 import Stats from "../models/Stats.model.js"; // Modelo de estadísticas
+import { limiter, analyzeMessage } from "../middleware/ia.middleware.js"; // Importar los middlewares
 
 dotenv.config();
 
 const router = express.Router();
 
-const PERSPECTIVE_API_KEY = process.env.PERSPECTIVE_API_KEY;
-const PERSPECTIVE_URL = "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
 
-/**
- * Función para analizar si el mensaje del usuario es ofensivo o irrelevante
- */
-const analyzeMessage = async (text) => {
-    try {
-      const response = await axios.post(`${PERSPECTIVE_URL}?key=${PERSPECTIVE_API_KEY}`, {
-        comment: { text },
-        languages: ["es"], // Idioma español
-        requestedAttributes: {
-          TOXICITY: {},
-          INSULT: {},
-          THREAT: {},
-          PROFANITY: {},
-        },
-      });
-  
-      // Extraer los valores de toxicidad
-      const scores = response.data.attributeScores;
-      const toxicity = scores.TOXICITY.summaryScore.value;
-      const insult = scores.INSULT.summaryScore.value;
-      const threat = scores.THREAT.summaryScore.value;
-      const profanity = scores.PROFANITY.summaryScore.value;
-  
-      console.log("Resultados de Perspective API:", { toxicity, insult, threat, profanity });
-  
-      // Si alguna métrica supera 0.7 (70% de probabilidad de ser ofensivo), bloquear el mensaje
-      if (toxicity > 0.7 || insult > 0.7 || threat > 0.7 || profanity > 0.7) {
-        return { blocked: true, message: "Tu mensaje parece inapropiado. Intenta reformularlo." };
-      }
-  
-      return { blocked: false, message: "Mensaje aceptado." };
-    } catch (error) {
-      console.error("Error en Perspective API:", error);
-      return { blocked: false, message: "No se pudo analizar el mensaje. Procediendo de todos modos." };
-    }
-  };
-
 // Ruta para obtener recomendaciones basadas en IA
-router.post('/recommendations', isAuthenticated, async (req, res, next) => {
+router.post('/recommendations', isAuthenticated, limiter, async (req, res, next) => {
     try {
         const { prompt } = req.body; // El prompt enviado por el frontend
         const userId = req.payload._id; // ID del usuario autenticado (obtenido del token JWT)
