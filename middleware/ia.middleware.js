@@ -4,10 +4,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Limitar las peticiones a 50 por cada 30 minutos
+// Limitar las peticiones a 20 por cada 30 minutos
 export const limiter = rateLimit({
   windowMs: 30 * 60 * 1000, // 30 minutos en milisegundos
-  max: 25, // Limitar a 50 peticiones
+  max: 20,
   keyGenerator: (req) => req.payload._id, // Límite por usuario (utilizando el ID del usuario autenticado)
   message: "Has superado el límite de peticiones. Inténtalo nuevamente en 30 minutos.",
   headers: true, // Agregar encabezados de tasa a la respuesta

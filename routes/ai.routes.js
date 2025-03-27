@@ -1,12 +1,12 @@
 import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
-import isAuthenticated from "../middleware/jwt.middleware.js"; // Middleware de autenticación
-import User from "../models/User.model.js"; // Modelo de usuario
-import Team from "../models/Team.model.js"; // Modelo de equipo
-import Player from "../models/Player.model.js"; // Modelo de jugador
-import Stats from "../models/Stats.model.js"; // Modelo de estadísticas
-import { limiter, analyzeMessage } from "../middleware/ia.middleware.js"; // Importar los middlewares
+import isAuthenticated from "../middleware/jwt.middleware.js";
+import User from "../models/User.model.js";
+import Team from "../models/Team.model.js";
+import Player from "../models/Player.model.js";
+import Stats from "../models/Stats.model.js";
+import { limiter, analyzeMessage } from "../middleware/ia.middleware.js";
 
 dotenv.config();
 
@@ -26,13 +26,13 @@ router.post('/recommendations', isAuthenticated, limiter, async (req, res, next)
             return res.status(400).json({ error: 'El prompt es requerido.' });
         }
 
-         // 1️⃣ **Verificar si el mensaje es ofensivo**
-         const moderationResult = await analyzeMessage(prompt);
-         if (moderationResult.blocked) {
-             return res.status(403).json({ error: moderationResult.message });
-         }
- 
-         // 2️⃣ **Si el mensaje es válido, continuar con Gemini**
+        // **Verificar si el mensaje es ofensivo**
+        const moderationResult = await analyzeMessage(prompt);
+        if (moderationResult.blocked) {
+            return res.status(403).json({ error: moderationResult.message });
+        }
+
+        // **Si el mensaje es válido, continuar con Gemini**
 
         // Obtener el usuario autenticado
         const user = await User.findById(userId).populate("team");
