@@ -9,7 +9,7 @@ export const limiter = rateLimit({
   windowMs: 30 * 60 * 1000, // 30 minutos en milisegundos
   max: 20,
   keyGenerator: (req) => req.payload._id, // Límite por usuario (utilizando el ID del usuario autenticado)
-  message: "Has superado el límite de peticiones. Inténtalo nuevamente en 30 minutos.",
+  message: "Has superado el límite de peticiones. Inténtalo nuevamente en unos minutos.",
   headers: true, // Agregar encabezados de tasa a la respuesta
 });
 
